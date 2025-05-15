@@ -1,0 +1,14 @@
+﻿<Window x:Class="TDAUnlocker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TDAUnlocker"
+        mc:Ignorable="d"
+        Title="Dark Ages Unlocker" Height="175" Width="250">
+    <Grid Background="#FF3C3C3C">
+        <Button x:Name="UnlockButton" Content="Unlock Console Commands" HorizontalAlignment="Center" Margin="0,19,0,0" VerticalAlignment="Top" Height="50" Width="200" Click="UnlockButton_Click" FontWeight="Bold"/>
+        <CheckBox x:Name="AutoUnlockCheckbox" Content="Automatically Unlock Console" HorizontalAlignment="Center" Margin="0,80,0,0" VerticalAlignment="Top" Foreground="White"/>
+        <Label x:Name="ErrorLabel" Content="Label" HorizontalAlignment="Center" Margin="0,100,0,0" VerticalAlignment="Top" Width="200" Background="#FF3C3C3C" Foreground="#FF3C3C3C"/>
+    </Grid>
+</Window>
