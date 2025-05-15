@@ -1,20 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36109.1 d17.14
+VisualStudioVersion = 17.14.36109.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TDAUnlocker", "TDAUnlocker\TDAUnlocker.csproj", "{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Debug|x64.ActiveCfg = Debug|x64
+		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Debug|x64.Build.0 = Debug|x64
 		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Release|x64.ActiveCfg = Release|x64
+		{BB8A9DBE-6F64-4CB4-9255-3E94C2DB2AB5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
