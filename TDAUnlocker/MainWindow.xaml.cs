@@ -117,13 +117,14 @@ namespace TDAUnlocker
                     FailedHookProcID = TDAGameProcess.Id;
                     return;
                 }
+                IsConsoleUnlocked = true;
             }
 
             ConsoleLockDP = new((int)(scannedPtr.ToInt64() - TDAGameProcess.MainModule.BaseAddress.ToInt64()) + 0x5);
 
             scannedPtr = scanner.Scan(perfMetrics);
             if(scannedPtr == IntPtr.Zero) {
-                SetErrorMessage("Couldn't find metrics.");
+                if(!IsConsoleUnlocked) SetErrorMessage("Couldn't find metrics.");
                 return;
             }
 
