@@ -14,9 +14,10 @@ namespace TDAUnlocker
     {
         public static readonly Brush BG_GRAY = new SolidColorBrush(Color.FromRgb(60, 60, 60));
 
-        DeepPointer ConsoleLockDP, MetricsDP;
+        DeepPointer ConsoleLockDP, MetricsDP, GodCmdDP, NoclipCmdDP, CmdArrayDP;
 
         int FailedHookProcID = 0;
+        bool CanSwapGodNoclipFuncs = false;
         bool IsHooked = false;
         bool IsConsoleUnlocked = false;
         Process TDAGameProcess = new();
@@ -100,15 +101,61 @@ namespace TDAUnlocker
 
             IsConsoleUnlocked = true;
             UnlockButton.Content = "Console Unlocked";
+
+            if(CanSwapGodNoclipFuncs && (bool)SwapGodNoclipCheckbox.IsChecked) SwapGodAndNoclipFuncs();
         }
 
+        /// <summary>
+        /// Swaps the god func pointer with the noclip func pointer in the cmd array.
+        /// Thanks to Micrologist for the Cheat Engine lua script that this was ported from.
+        /// </summary>
+        private void SwapGodAndNoclipFuncs() {
+            HideErrorMessage();
+            UnlockButton.Content = "Swapping god and noclip...";
+
+            IntPtr godCmdPtr = IntPtr.Zero;
+            IntPtr noclipCmdPtr = IntPtr.Zero;
+            IntPtr cmdArrayPtr = IntPtr.Zero;
+            GodCmdDP?.DerefOffsets(TDAGameProcess, out godCmdPtr);
+            NoclipCmdDP?.DerefOffsets(TDAGameProcess, out noclipCmdPtr);
+            CmdArrayDP?.DerefOffsets(TDAGameProcess, out cmdArrayPtr);
+
+            if(godCmdPtr == IntPtr.Zero || noclipCmdPtr == IntPtr.Zero || cmdArrayPtr == IntPtr.Zero) {
+                SetErrorMessage("Failed to deref cmd offsets.");
+                return;
+            }
+
+            IntPtr addr, val;
+            for(long l = cmdArrayPtr.ToInt64() - 1000; l <= cmdArrayPtr.ToInt64() + 1000; l += 8) {
+                addr = new IntPtr(l);
+                val = TDAGameProcess.ReadPointer(addr);
+                if(val == godCmdPtr) {
+                    TDAGameProcess.VirtualProtect(addr, 8, MemPageProtect.PAGE_EXECUTE_READWRITE);
+                    TDAGameProcess.WriteValue(addr, noclipCmdPtr);
+                    UnlockButton.Content = "Unlocked & swapped noclip";
+                    return;
+                }
+            }
+
+            SetErrorMessage("Couldn't find god cmd ptr.");
+            UnlockButton.Content = "Console Unlocked";
+        }
+
+        /// <summary>
+        /// Scans for various required signatures.
+        /// Thanks to rumii and Micrologist for the Cheat Engine lua scripts this was ported from.
+        /// </summary>
         private void SigScan() {
             SigScanTarget consoleLocked   = new("084C8B0EBA01");
             SigScanTarget consoleUnlocked = new("084C8B0EBA00");
             SigScanTarget perfMetrics     = new("2569204650530000252E32666D7300004672616D65203A202575");
+            SigScanTarget godCmd          = new("40534883EC208B41??488BDA83F8FF7523488BCAE8");
+            SigScanTarget noclipCmd       = new("48895C24??574883EC20488B02488BCA488BDAFF90????????488BC8");
+            SigScanTarget cmdArray        = new("6964436C69656E7447616D654D73675F5265737061776E506C6179657220");
 
             SignatureScanner scanner = new(TDAGameProcess, TDAGameProcess.MainModule.BaseAddress, TDAGameProcess.MainModule.ModuleMemorySize);
 
+            // Scanning for console restriction address
             var scannedPtr = scanner.Scan(consoleLocked);
             if(scannedPtr == IntPtr.Zero) {
                 scannedPtr = scanner.Scan(consoleUnlocked);
@@ -120,21 +167,54 @@ namespace TDAUnlocker
                 IsConsoleUnlocked = true;
             }
 
-            ConsoleLockDP = new((int)(scannedPtr.ToInt64() - TDAGameProcess.MainModule.BaseAddress.ToInt64()) + 0x5);
+            ConsoleLockDP = CreateDeepPointer(scannedPtr, 0x5);
 
+            // Scanning for performance metrics string
             scannedPtr = scanner.Scan(perfMetrics);
             if(scannedPtr == IntPtr.Zero) {
                 if(!IsConsoleUnlocked) SetErrorMessage("Couldn't find metrics.");
                 return;
             }
 
-            MetricsDP = new((int)(scannedPtr.ToInt64() - TDAGameProcess.MainModule.BaseAddress.ToInt64()));
+            MetricsDP = CreateDeepPointer(scannedPtr);
+
+            CanSwapGodNoclipFuncs = true;
+            // Scanning for god function
+            scannedPtr = scanner.Scan(godCmd);
+            if(scannedPtr == IntPtr.Zero) {
+                CanSwapGodNoclipFuncs = false;
+                SetErrorMessage("Couldn't find god function.");
+                return;
+            }
+
+            GodCmdDP = CreateDeepPointer(scannedPtr);
+
+            // Scanning for noclip function
+            scannedPtr = scanner.Scan(noclipCmd);
+            if(scannedPtr == IntPtr.Zero) {
+                CanSwapGodNoclipFuncs = false;
+                SetErrorMessage("Couldn't find noclip function.");
+                return;
+            }
+
+            NoclipCmdDP = CreateDeepPointer(scannedPtr);
+
+            // Scanning for cmd array
+            scannedPtr = scanner.Scan(cmdArray);
+            if(scannedPtr == IntPtr.Zero) {
+                CanSwapGodNoclipFuncs = false;
+                SetErrorMessage("Couldn't find cmd array.");
+                return;
+            }
+
+            CmdArrayDP = CreateDeepPointer(scannedPtr);
         }
 
         private void SetErrorMessage(string msg) {
             ErrorLabel.Content = msg;
             ErrorLabel.Foreground = Brushes.Red;
         }
+
         private void HideErrorMessage() => ErrorLabel.Foreground = BG_GRAY;
 
         #region UI Events
@@ -145,6 +225,8 @@ namespace TDAUnlocker
             ProcessTimer.Start();
         }
         #endregion Events
+
+        private DeepPointer CreateDeepPointer(IntPtr ptr, int offset = 0x0) => new((int) (ptr.ToInt64() - TDAGameProcess.MainModule.BaseAddress.ToInt64()) + offset);
 
         private static byte[] ToByteArray(string text, int length) {
             byte[] output = new byte[length];
